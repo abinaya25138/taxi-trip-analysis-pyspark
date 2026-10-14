@@ -1,31 +1,36 @@
-OLA DATA ANALYSIS
-Overview
-This project aims to analyze and model data from Ola's datasets to gain insights into ride-sharing operations and optimize services.
+# Taxi Trip Analysis with PySpark
 
-Steps Used
-1. Data Collection
-Obtained access to Ola's datasets, including information on rides, drivers, locations, and times. The data was available in various formats such as CSV, JSON, or databases.
+A big-data-style analysis of ride data using **PySpark**, built around a ride-hailing business problem (demand patterns, trip economics, pickup hotspots) on the publicly available **NYC TLC taxi trip dataset** as a stand-in for proprietary ride-hailing data.
 
-2. Data Cleaning and Preprocessing
-Cleaned and preprocessed the datasets to handle noise, missing or inconsistent values. This step ensured the quality and integrity of the data, which is crucial for further analysis.
+## Pipeline
 
-3. Exploratory Data Analysis (EDA)
-Conducted exploratory data analysis to understand the structure and characteristics of the data. Visualized the data using graphs, charts, and statistical summaries to identify patterns, correlations, outliers, and trends.
+1. **Ingestion** — load ~100K trip records into a Spark DataFrame (`nyc_taxi_trips.csv`).
+2. **Dimensional modeling** — extract `datetime_dim`, `pickup_location_dim`, and `dropoff_location_dim` tables (a small star-schema pattern for the trip fact table).
+3. **Data quality checks** — count missing values per column; summary statistics via `.describe()`.
+4. **Feature engineering** — derive `trip_distance_in_miles`, pickup/dropoff hour & minute, `trip_duration_minutes`, `trip_average_speed_mph`, and a derived `estimated_tip_amount` label.
+5. **Predictive modeling** — a Spark MLlib `LinearRegression` estimates tip amount from trip features; evaluated with RMSE and R² on a held-out test split.
+6. **Clustering** — `KMeans` groups pickup coordinates into 5 hotspot zones, visualized with a scatter plot.
 
-4. Feature Engineering
-Created new features from the existing data to enhance predictive modeling and analysis. Derived features such as ride duration, distance traveled, peak hours, and surge pricing.
+## Tech stack
 
-5. Predictive Modeling
-Built machine learning models to predict various outcomes or behaviors related to Ola's operations. This includes predicting rider demand in different areas at different times, forecasting driver availability, and estimating trip durations.
+PySpark (DataFrame API + MLlib), pandas, matplotlib, seaborn
 
-6. Clustering and Segmentation
-Utilized clustering algorithms to segment riders, drivers, or geographical regions based on similar characteristics or behavior. This segmentation can help Ola tailor its services and marketing strategies to different segments more effectively.
+## Setup
 
-7. Fact Table Creation
-Created a fact table to consolidate relevant data for analysis and modeling. This table serves as a central repository of key metrics and dimensions, facilitating further insights and decision-making.
+```bash
+pip install pyspark pandas matplotlib seaborn
+jupyter notebook ola_bigdata.ipynb
+```
 
-Conclusion
-This project provides valuable insights and predictive models to optimize Ola's ride-sharing operations, improve service quality, and enhance customer satisfaction.
+Requires a working Java runtime (PySpark needs a JVM — Java 8/11/17 all work).
 
-Further Steps
-Future iterations of this project could explore advanced modeling techniques, integrate real-time data for dynamic analysis, and develop actionable recommendations for operational improvements. Additionally, ongoing monitoring and evaluation of model performance would be essential for maintaining effectiveness and relevance.
+## Notes
+
+- The dataset models a ride-hailing scenario but is the public NYC taxi trip dataset, not proprietary Ola data — real Ola data isn't publicly available, so this stands in for it.
+- `estimated_tip_amount` is a simplified label (20% of fare) used to demonstrate the regression pipeline, not a real-world tip model.
+
+## Possible extensions
+
+- Swap in a tree-based model (Random Forest / GBT) for the tip-prediction task and compare RMSE
+- Use the pickup cluster id as a categorical feature in the regression
+- Add time-series demand forecasting by hour/day-of-week
